@@ -14,5 +14,5 @@ def kmer_count(seq, k):
 if __name__ == "__main__":
     fn = sys.argv[1]
     seq = open(fn).read()
-    k = sys.argv[2]
+    k = int(sys.argv[2])
     print(kmer_count(seq, k))

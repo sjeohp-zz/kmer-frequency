@@ -1,21 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
-#include "timing.h"
+#include "lib/timing.h"
 
 unsigned long modpow(int b, int e, int m) {
-    if (b == 1) { return 0; }
-    unsigned long result = 1;
-    b = b % m;
-    while (e > 0) {
-		if (e % 2 == 1) {
-			result = result * b % m;
+	unsigned long number = 1;
+	while (e) {
+		if (e & 1) {
+			number = number * b % m;
 		}
-		e = e >> 1;
-		b = b * b % m;
+		e >>= 1;
+		b = (unsigned long)b * b % m;
 	}
-    return result;
+	return number;
 }
 
 int32_t wrap_neg(int32_t i, int32_t i_max) {
@@ -39,6 +38,20 @@ uint32_t rabin_mod(int x, char s0, char sn, int k) {
 	return ( a + (int)sn ) % modulus;
 }
 
+uint32_t rabin_std(const char* s, int k) {
+	uint32_t h = 0;
+	for (int i = 0; i < k; ++i) {
+		h = h + (((int)s[i]) * (uint32_t)(pow(radix, (k-1)-i)));
+	}
+	return h;
+}
+
+uint32_t rabin_std(uint32_t x, char s0, char sn, int k) {
+	int32_t a = x - (int)s0 * (uint32_t)pow(radix, k-1);
+	a = a * radix;
+	return ( a + (int)sn );
+}
+
 int rolling_hash(const char* fn, int k) {
 	int* table = (int*)calloc(modulus, sizeof(int));	
 	char buf[k];
@@ -52,6 +65,7 @@ int rolling_hash(const char* fn, int k) {
 			table[x]++;			
 			while ((c = getc(file_a)) != EOF) {
 				x = rabin_mod(x, c0, (char)c, k);
+				// printf("%d\n", x);
 				c0 = getc(file_b);
 				table[x]++;
 			}
@@ -82,7 +96,7 @@ void benchmark(const char* fn, int k) {
 	printf("Mean time over %d iterations: %gms\n", iter, t);
 }
 
-int main(int argc, char** argv) {	
+int main(int argc, char** argv) {
 	
 	if (argc < 3) {
 		printf("usage: ./run <filename> <k>\n");
@@ -93,10 +107,21 @@ int main(int argc, char** argv) {
 	const int k = atoi(argv[2]);
 	
 	FILE* file = fopen(fn, "r");
+	if (!file) {
+		printf("Could not open file.\n");
+		return 0;
+	}
 	fseek(file, 0L, SEEK_END);
 	int bytes = ftell(file);
 	printf("Bytes in file: %d\n", bytes);
 	fclose(file);
+	
+	if (argc > 3) {
+		if (strcmp(argv[3], "-b") == 0) {
+			benchmark(fn, k);
+			return 0;
+		}
+	}
 	
 	timing::start();
 	int freq = rolling_hash(fn, k);

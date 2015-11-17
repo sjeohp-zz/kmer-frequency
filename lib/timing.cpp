@@ -56,14 +56,14 @@ void print_milli() {
 	if (duration_ == ULLONG_MAX) {
 		printf("TIMING WARNING: it looks like you didn't called stop() before printing.\n");
 	}
-	printf("Elapsed time: %Lfms\n", duration_ / 1000.0L);
+	printf("Elapsed time: %.2Lfms\n", duration_ / 1000.0L);
 }
 
 void print_sec() {
 	if (duration_ == ULLONG_MAX) {
 		printf("TIMING WARNING: it looks like you didn't called stop() before printing.\n");
 	}
-	printf("Elapsed time: %Lfs\n", duration_ / 1000000.0L);
+	printf("Elapsed time: %.4Lfs\n", duration_ / 1000000.0L);
 }
 
 }

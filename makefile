@@ -1,15 +1,13 @@
-CXX = clang++
-FPATH = -F/Library/Frameworks
-CCFLAGS = -g -c -ffast-math -Wall -std=c++11 $(FPATH)
-LDFLAGS = $(FPATH)
-SRC = main.cpp timing.cpp
+CXX = clang
+CCFLAGS = -g -c -ffast-math -Wall
+SRC = main.cpp lib/timing.cpp
 OBJ = $(SRC:.cpp=.o)
 EXE = run
 
 all: $(SRC) $(EXE)
 
 $(EXE): $(OBJ)
-	$(CXX) $(LDFLAGS) $(OBJ) -o $@
+	$(CXX) $(OBJ) -o $@
 
 .cpp.o:
 	$(CXX) $(CCFLAGS) $< -o $@
