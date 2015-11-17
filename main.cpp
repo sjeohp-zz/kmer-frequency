@@ -88,11 +88,13 @@ int rolling_hash(const char* fn, int k) {
 void benchmark(const char* fn, int k) {
 	int iter = 100;
 	timing::start();
-	for (int i = 0; i < iter; ++i) {
+	for (int i = 0; i < iter-1; ++i) {
 		rolling_hash(fn, k);
 	}
+	int freq = rolling_hash(fn, k);
 	timing::stop();
 	double t = timing::elapsed_ms_stopped() / iter;
+	printf("Subsequences of length %d, highest frequency: %d\n", k, freq);
 	printf("Mean time over %d iterations: %gms\n", iter, t);
 }
 
@@ -126,7 +128,7 @@ int main(int argc, char** argv) {
 	timing::start();
 	int freq = rolling_hash(fn, k);
 	timing::stop();
-	printf("Subsequence of length %d, highest frequency: %d\n", k, freq);
+	printf("Subsequences of length %d, highest frequency: %d\n", k, freq);
 	timing::print_milli();
 
     return 0;
