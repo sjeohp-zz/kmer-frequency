@@ -61,13 +61,6 @@ void quicksort_kmer_dsc(kmer* a, uint32_t n) {
         kmer t = *l;
         *l++ = *r;
         *r-- = t;
-		
-		// kmer t;
-		// memcpy(&t, l, sizeof(kmer));
-		// memcpy(l, r, sizeof(kmer));
-		// memcpy(r, &t, sizeof(kmer));
-		// l++;
-		// r--;
     }
     quicksort_kmer_dsc(a, r - a + 1);
     quicksort_kmer_dsc(l, a + n - l);
@@ -196,95 +189,100 @@ int update_enc(unsigned char* enc, int n, char b) {
 	return 0;
 }
 
+int cmp_seq(unsigned char* a, unsigned char* b) {
+	return (a[0] == b[0] &&
+		a[1] == b[1] &&
+		a[2] == b[2] &&
+		a[3] == b[3] &&
+		a[4] == b[4] &&
+		a[5] == b[5] &&
+		a[6] == b[6] &&
+		a[7] == b[7]);
+}
+
+uint32_t* kmer_count;
+unsigned char* kmer_seq;
+
 int rolling_hash(const char* fn, int k, kmer* table, kmer* table1, int* collisions) {
 	
 	FILE* fp_lead = fopen(fn, "r");
 	FILE* fp_trail = fopen(fn, "r");
-	char ignore[1024];
-	char buf[k];
+	char* ignore = (char*)calloc(1024, sizeof(char));
+	char* buf = (char*)calloc(k, sizeof(char));
 	unsigned char* encoding = (unsigned char*)calloc(8, sizeof(unsigned char));
 	int c_lead; // leading char (int incase negative value returned, e.g. EOF)
 	int c_trail; // trailing char
 	uint32_t x; // hash value
 	fpos_t p;
+	
+	kmer_count = (uint32_t*)calloc(modulus, sizeof(uint32_t));
+	kmer_seq = (unsigned char*)calloc(modulus * 8, sizeof(unsigned char));
+	
+	char* seq = (char*)calloc(k, sizeof(char));
+	// for (int i = 0; i < 25; ++i) {
+	// 	memset(seq, 0x00, k);
+	// 	decode_seq(&kmer_seq[i*8], k, seq);
+	// 	printf("%d : %s\n", kmer_count[i], seq);
+	// }
 
 	if (fp_lead && fp_trail) {
-		while (fgets(ignore, sizeof(ignore), fp_lead)) { // ignore line 1 of each chunk, stop at EOF
+		while (fgets(ignore, 1024, fp_lead)) { // ignore line 1 of each chunk, stop at EOF
 			/* start of line 2 */
 			fgetpos(fp_lead, &p);
 			fsetpos(fp_trail, &p);
+			
+			printf("ignore: %s\n", ignore);
 		
 			// assume FASTQ chunk size is at least as large as k
 			if (fread(buf, sizeof(char), k, fp_lead) == k) { // advance leading char
 				x = hash_seq(buf, k); // hash kmer
-				// table[x].count++; // increment kmer count
 				
 				memset(encoding, 0x00, 8);
 				if (encode_seq(buf, k, encoding)) { return 1; }
 				
-				// uint64_t enc64;
-				// memcpy(&enc64, encoding, 8);
-				// uint64_t mixed = fasthash64(&encoding, 8, 0);
-				// uint64_t x = mixed % modulus;
-				
-				if (table[x].count == 0) {
-				
-					table[x].count++;
-					memcpy(table[x].seq, encoding, 8);
-			
-				} else if (memcmp(table[x].seq, encoding, 8) != 0) {
-				
-					if (table1[x].count == 0) {
-						table1[x].count++;
-						memcpy(table1[x].seq, encoding, 8);
-					} else if (memcmp(table1[x].seq, encoding, 8) != 0) {
-						++(*collisions);
-					} else {
-						table1[x].count++;
-					}
-									
-				} else if (memcmp(table[x].seq, encoding, 8) == 0) {
-					table[x].count++;
-				}
-				
+				// memset(seq, 0x00, k);
+// 				decode_seq(encoding, k, seq);
+				printf("%d : %s\n", kmer_count[x], buf);
+
 				c_trail = getc(fp_trail); // advance trailing char
 				while ((c_lead = getc(fp_lead)) && c_lead != (int)'\n') { // advance leading char
-					x = update_hash(x, c_trail, c_lead, k); // update hash
-					// table[x].count++; // increment kmer count
+					
+					if (kmer_count[x] == 0) {
 
-					if (update_enc(encoding, k, c_lead)) { return 1; }
-
-					// uint64_t enc64;
-					// memcpy(&enc64, encoding, 8);
-					// uint64_t mixed = fasthash64(&encoding, 8, 0);
-					// uint64_t x = mixed % modulus;
-
-					if (table[x].count == 0) {
-
-						table[x].count++;
+						kmer_count[x]++;
 						// memset(table[x].seq, 0x00, 8);
-						memcpy(table[x].seq, encoding, 8);
+						
+						kmer_seq[x*8] = encoding[0];
+						kmer_seq[x*8+1] = encoding[1];
+						kmer_seq[x*8+2] = encoding[2];
+						kmer_seq[x*8+3] = encoding[3];
+						kmer_seq[x*8+4] = encoding[4];
+						kmer_seq[x*8+5] = encoding[5];
+						kmer_seq[x*8+6] = encoding[6];
+						kmer_seq[x*8+7] = encoding[7];
+						
+						// memcpy(kmer_seq[x], encoding, 8);
 
-					} else if (memcmp(table[x].seq, encoding, 8) != 0) {
-
-						if (table1[x].count == 0) {
-							table1[x].count++;
-							memcpy(table1[x].seq, encoding, 8);
-						} else if (memcmp(table1[x].seq, encoding, 8) != 0) {
-							++(*collisions);
-						} else {
-							table1[x].count++;
-						}
-
-					} else if (memcmp(table[x].seq, encoding, 8) == 0) {
-						table[x].count++;
+					} else if (!cmp_seq(&kmer_seq[x*8], encoding)) {
+						++(*collisions);
+					} else if (cmp_seq(&kmer_seq[x*8], encoding)) {
+						kmer_count[x]++;
+					} else {
+						printf("something wierd\n");
 					}
+					
+					// memset(seq, 0x00, k);
+// 					decode_seq(encoding, k, seq);
+// 					printf("%d : %s\n", kmer_count[x], seq);
+					
+					x = update_hash(x, c_trail, c_lead, k); // update hash
+					if (update_enc(encoding, k, c_lead)) { return 1; }
 
 					c_trail = getc(fp_trail); // advance trailing char
 				}
 				/* end of line 2 */
-				if (!fgets(ignore, sizeof(ignore), fp_lead)) { break; }; // ignore line 3
-				if (!fgets(ignore, sizeof(ignore), fp_lead)) { break; }; // ignore line 4
+				if (!fgets(ignore, 1024, fp_lead)) { break; }; // ignore line 3
+				if (!fgets(ignore, 1024, fp_lead)) { break; }; // ignore line 4
 			}
 		}
 		
@@ -311,22 +309,6 @@ void benchmark(const char* fn, int k, kmer* table) {
 }
 
 int main(int argc, char** argv) {
-
-	// const int n = 9;
-// 	char seq[n+1] = { 'A', 'T', 'G', 'C', 'A', 'T', 'G', 'C', 'A' };
-// 	seq[n] = '\0';
-// 	printf("%s\n", seq);
-//
-// 	unsigned char* enc = (unsigned char*)calloc(8, sizeof(unsigned char)); // 64 bits can hold a 30 base sequence
-// 	encode_seq(seq, n, enc);
-//
-// 	update_enc(enc, n, 'A');
-//
-// 	char dec[n+1];
-// 	dec[n] = '\0';
-// 	decode_seq(enc, n, dec);
-//
-// 	printf("%s\n", dec);
 	
 #ifdef ALT
 	const int k = 30;
@@ -390,38 +372,38 @@ int main(int argc, char** argv) {
 	kmer* table1 = (kmer*)calloc(modulus, sizeof(kmer));
 	int collisions = 0;
 
-	if (argc > 3) {
-		if (strcmp(argv[3], "-b") == 0) {
-			benchmark(fn, k, table);
-			return 0;
-		}
-	}
+	// if (argc > 3) {
+	// 	if (strcmp(argv[3], "-b") == 0) {
+	// 		benchmark(fn, k, table);
+	// 		return 0;
+	// 	}
+	// }
 
 	timing::start();
 	if (rolling_hash(fn, k, table, table1, &collisions)) {
 		printf("Error parsing sequence. Make sure sequences are at least k in length.");
 		return 0;
 	}
-	quicksort_kmer_dsc(table, modulus);
-	quicksort_kmer_dsc(table1, modulus);
+	// quicksort_kmer_dsc(table, modulus);
+	// quicksort_kmer_dsc(table1, modulus);
 	timing::stop();
 	timing::print_milli();
 	// printf("Subsequences of length %d, highest frequency: %d\n", k, freq);
 
+	char* seq = (char*)calloc(k, sizeof(char));
 	printf("Table 0:\n");
 	for (int i = 0; i < 25; ++i) {
-		char seq[k];
 		memset(seq, 0x00, k);
-		decode_seq(table[i].seq, k, seq);
-		printf("%d : %s\n", table[i].count, seq);
+		decode_seq(&kmer_seq[i*8], k, seq);
+		printf("%d : %s\n", kmer_count[i], seq);
 	}
-	printf("Table 1:\n");
-	for (int i = 0; i < 25; ++i) {
-		char seq[k];
-		memset(seq, 0x00, k);
-		decode_seq(table1[i].seq, k, seq);
-		printf("%d : %s\n", table1[i].count, seq);
-	}
+	// printf("Table 1:\n");
+	// for (int i = 0; i < 25; ++i) {
+	// 	char seq[k];
+	// 	memset(seq, 0x00, k);
+	// 	decode_seq(table1[i].seq, k, seq);
+	// 	printf("%d : %s\n", table1[i].count, seq);
+	// }
 	printf("Collisions: %d\n", collisions);
 #endif
 	
