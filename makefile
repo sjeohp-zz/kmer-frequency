@@ -1,6 +1,6 @@
 CXX = clang
-CCFLAGS = -g -c -ffast-math -Wall
-SRC = main.cpp lib/timing.cpp
+CCFLAGS = -g -c -Wall #-ffast-math
+SRC = main.cpp lib/timing.cpp fast-hash/fasthash.c
 OBJ = $(SRC:.cpp=.o)
 EXE = run
 
