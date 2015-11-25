@@ -8,6 +8,9 @@ make
 To run:
 ./run <filename> <k>
 
+<filename> 	is a file of DNA sequence reads in FASTQ format.
+<k> 		is the length of k-mers to be counted.
+
 K-mer search runs in O(n) time, where n is the size of the file.
 Sorting is done in O(nlogn) time.
 
