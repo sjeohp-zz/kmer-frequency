@@ -33,7 +33,7 @@ void table_init(kmer** table, int divsize, int ndivs);
 **	@return 			0 - no error
 **						1 - insertion error. x exceeded divsize.
 */
-int table_insert(kmer* table, int divsize, int ndivs, unsigned char* seq, int x, int* ncollisions, int* nunresolved);
+int table_insert(kmer* table, int divsize, int ndivs, unsigned char* seq, uint64_t x, uint64_t* ncollisions, uint64_t* nunresolved);
 
 /* 	@function			Sort k-mer table from most common k-mer to least. (implemented as a quicksort)
 **	@param	a			Table to be sorted.

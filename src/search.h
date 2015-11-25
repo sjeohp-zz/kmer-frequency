@@ -33,6 +33,6 @@ typedef struct parse_error {
 						2 - fp was NULL
 						3 - error inserting sequence: x exceeded division size. this shouldn't happen.
 */
-int search(FILE* fp, int k, kmer* table, int divsize, int ndivs, int* ncollisions, int* nunresolved, parse_error* err);
+int search(FILE* fp, int k, kmer* table, int divsize, int ndivs, uint64_t* ncollisions, uint64_t* nunresolved, parse_error* err);
 
 #endif

@@ -4,7 +4,9 @@
 #include "encoding.h"
 #include "../lib/fasthash/fasthash.h"
 
-int search(FILE* fp, int k, kmer* table, int divsize, int ndivs, int* ncollisions, int* nunresolved, parse_error* err) {
+#define HASHSEED 101
+
+int search(FILE* fp, int k, kmer* table, int divsize, int ndivs, uint64_t* ncollisions, uint64_t* nunresolved, parse_error* err) {
 	
 	char* buf = (char*)calloc(1024, sizeof(char));
 	unsigned char* enc = (unsigned char*)calloc(16, sizeof(unsigned char));
@@ -32,7 +34,7 @@ int search(FILE* fp, int k, kmer* table, int divsize, int ndivs, int* ncollision
 				}
 				break; 
 			}
-			x = fasthash64(enc, 16, 101) % divsize;
+			x = fasthash64(enc, 16, HASHSEED) % divsize;
 			
 			c_lead = buf[k];
 			c_trail = buf[0];
@@ -54,7 +56,7 @@ int search(FILE* fp, int k, kmer* table, int divsize, int ndivs, int* ncollision
 						}
 						break;
 					}
-					x = fasthash64(enc, 16, 101) % divsize;
+					x = fasthash64(enc, 16, HASHSEED) % divsize;
 				}
 				charc++;
 				c_lead = buf[k+charc];

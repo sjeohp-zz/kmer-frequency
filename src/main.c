@@ -11,8 +11,18 @@
 #include "table.h"
 #include "search.h"
 
-#define DIVSIZE 3145739
-#define NDIVS 8
+/* DIVSIZE should be a prime number suitable for a hash table size */
+// #define DIVSIZE 6291469
+#define NDIVS 4
+
+uint32_t hash_size[] = {
+	6291469,
+	12582917,
+	25165843,
+	50331653,
+	100663319,
+	201326611
+};
 
 int main(int argc, char** argv) {
 
@@ -35,30 +45,45 @@ int main(int argc, char** argv) {
 		return 0;
 	}
 	fseek(fp, 0L, SEEK_END);
-	int filesize = ftell(fp);
-	printf("\nFile size:\t%d kb\n", filesize/1000);
-	printf("Table size:\t%lu kb\n", NDIVS*DIVSIZE*sizeof(kmer)/1000);
+	uint64_t filesize = ftell(fp) / 1000000L;
+	printf("\nFile size:\t%llu mb\n", filesize);
 	fseek(fp, 0, SEEK_SET);
+	
+	int divsize;
+#ifdef DIVSIZE
+	divsize = DIVSIZE;
+#else
+	divsize = hash_size[5];
+	for (int i = 5; i >= 0; --i) {
+		if (hash_size[i]*NDIVS/1000000L > filesize/4) {
+			divsize = hash_size[i];
+		}
+	}
+#endif
+	
+	printf("Table size:\t%lu mb\n", NDIVS*divsize*sizeof(kmer)/1000000L);
+	
+	printf("\nTallying k-mers...\n");
 	
 	time_start();
 
 	kmer* table;
-	table_init(&table, DIVSIZE, NDIVS);
+	table_init(&table, divsize, NDIVS);
 	
-	int ncollisions = 0;
-	int nunresolved = 0;
-
+	uint64_t ncollisions = 0;
+	uint64_t nunresolved = 0;
+	
 	parse_error err;
 	int err_n;
-	if (!(err_n = search(fp, k, table, DIVSIZE, NDIVS, &ncollisions, &nunresolved, &err))) {
+	if (!(err_n = search(fp, k, table, divsize, NDIVS, &ncollisions, &nunresolved, &err))) {
 		
-		table_sort_dsc(table, NDIVS*DIVSIZE);
+		table_sort_dsc(table, NDIVS*divsize);
 		time_stop();
 	
 		fclose(fp);
 	
-		printf("\nCollisions:\t%d\n", ncollisions);
-		printf("Unresolved:\t%d\n\n", nunresolved);
+		printf("\nCollisions:\t%llu\n", ncollisions);
+		printf("Unresolved:\t%llu\n\n", nunresolved);
 	
 		printf("Elapsed time:\t%.2Lf ms\n", time_elapsed() / 1000.0L);
 

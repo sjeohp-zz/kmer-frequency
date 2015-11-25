@@ -6,7 +6,7 @@ void table_init(kmer** table, int divsize, int ndivs) {
 	*table = (kmer*)calloc(divsize*ndivs, sizeof(kmer));
 }
 
-int table_insert_helper(kmer* tdiv, unsigned char* seq, int x) {
+int table_insert_helper(kmer* tdiv, unsigned char* seq, uint64_t x) {
 	if (tdiv[x].count == 0) {
 		tdiv[x].count++;
 		memcpy(tdiv[x].seq, seq, 16);
@@ -18,7 +18,7 @@ int table_insert_helper(kmer* tdiv, unsigned char* seq, int x) {
 	return 0;
 }
 
-int table_insert(kmer* table, int divsize, int ndivs, unsigned char* seq, int x, int* ncollisions, int* nunresolved) {
+int table_insert(kmer* table, int divsize, int ndivs, unsigned char* seq, uint64_t x, uint64_t* ncollisions, uint64_t* nunresolved) {
 	if (x >= divsize) {
 		return 1;
 	}
