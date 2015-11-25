@@ -1,5 +1,4 @@
 #include <string.h>
-
 #include "encoding.h"
 
 unsigned char encode_base(char b) {
@@ -12,8 +11,28 @@ unsigned char encode_base(char b) {
 		return 0x03;
 		case 'C':
 		return 0x04;
-		case 'N':
+		case 'W':
 		return 0x05;
+		case 'S':
+		return 0x06;
+		case 'M':
+		return 0x07;
+		case 'K':
+		return 0x08;
+		case 'R':
+		return 0x09;
+		case 'Y':
+		return 0x0A;
+		case 'B':
+		return 0x0B;
+		case 'D':
+		return 0x0C;
+		case 'H':
+		return 0x0D;
+		case 'V':
+		return 0x0E;
+		case 'N':
+		return 0x0F;
 		default:
 		return 0x00;
 	}
@@ -30,17 +49,43 @@ char decode_base(unsigned char b) {
 		case 0x04:
 		return 'C';
 		case 0x05:
+		return 'W';
+		case 0x06:
+		return 'S';
+		case 0x07:
+		return 'M';
+		case 0x08:
+		return 'K';
+		case 0x09:
+		return 'R';
+		case 0x0A:
+		return 'Y';
+		case 0x0B:
+		return 'B';
+		case 0x0C:
+		return 'D';
+		case 0x0D:
+		return 'H';
+		case 0x0E:
+		return 'V';
+		case 0x0F:
 		return 'N';
 		default:
 		return 0x00;
 	}
 }
 
-int encode_seq(unsigned char* enc, const char* seq, int n) {
+int encode_seq(unsigned char* enc, const char* seq, int n, int* err_c, int* err_i) {
 	memset(enc, 0x00, 16);
 	unsigned char base;
 	for (int i = 0; i < n; ++i) {
-		if ((base = encode_base(seq[i])) == 0) { return 1; }; // return error if base is not valid
+		if ((base = encode_base(seq[i])) == 0x00) { 
+			if (err_c && err_i) {
+				*err_c = seq[i];
+				*err_i = i;
+			}
+			return 1; 
+		} // return error if base is not valid
 		base <<= 4-i%2*4; // shift base to place in encoding
 		enc[i/2] |= base; // add base to encoding
 	}
@@ -58,8 +103,9 @@ int decode_seq(char* seq, unsigned char* enc, int n) {
 	return 0;
 }
 
-int encode_update(unsigned char* enc, char b,  int n) {
-	unsigned char b0 = encode_base(b);
+int encode_update(unsigned char* enc, char b, int n) {
+	unsigned char b0;
+	if ((b0 = encode_base(b)) == 0x00) { return 1; }
 	unsigned char b1;
 	int byte = n/2-1; // last byte used in encoding
 	int offset = n%2*4; // 'leftwise' offset of last base in encoding

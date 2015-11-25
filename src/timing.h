@@ -1,15 +1,11 @@
-// #include "timing.h"
-
 #include <sys/time.h>
-// #include <ctime>
 #include <limits.h>
 #include <stdio.h>
 
 unsigned long long start_ = 0;
 unsigned long long duration_ = ULLONG_MAX;	
 
-unsigned long long timestamp_usec()
-{
+unsigned long long timestamp_usec() {
   struct timeval now;
   gettimeofday(&now, NULL);
   return  now.tv_usec + (unsigned long long)now.tv_sec * 1000000L;
