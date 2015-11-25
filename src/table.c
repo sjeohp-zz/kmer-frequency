@@ -18,7 +18,10 @@ int table_insert_helper(kmer* tdiv, unsigned char* seq, int x) {
 	return 0;
 }
 
-void table_insert(kmer* table, int divsize, int ndivs, unsigned char* seq, int x, int* ncollisions, int* nunresolved) {
+int table_insert(kmer* table, int divsize, int ndivs, unsigned char* seq, int x, int* ncollisions, int* nunresolved) {
+	if (x >= divsize) {
+		return 1;
+	}
 	int col = 0;
 	for (int i = 0; i < ndivs; ++i) { // loop over hash table divisions
 		if ((col = table_insert_helper(table+i*divsize, seq, x))) {
@@ -28,6 +31,7 @@ void table_insert(kmer* table, int divsize, int ndivs, unsigned char* seq, int x
 		}
 	}
 	*nunresolved += col;
+	return 0;
 }
 
 void table_sort_dsc(kmer* a, int n) {

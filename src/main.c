@@ -11,8 +11,8 @@
 #include "table.h"
 #include "search.h"
 
-#define DIVSIZE 1572869
-#define NDIVS 16
+#define DIVSIZE 3145739
+#define NDIVS 8
 
 int main(int argc, char** argv) {
 
@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
 	fseek(fp, 0L, SEEK_END);
 	int filesize = ftell(fp);
 	printf("\nFile size:\t%d kb\n", filesize/1000);
-	printf("Table size:\t%d kb\n", NDIVS*DIVSIZE/1000);
+	printf("Table size:\t%lu kb\n", NDIVS*DIVSIZE*sizeof(kmer)/1000);
 	fseek(fp, 0, SEEK_SET);
 	
 	time_start();

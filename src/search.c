@@ -37,9 +37,12 @@ int search(FILE* fp, int k, kmer* table, int divsize, int ndivs, int* ncollision
 			c_lead = buf[k];
 			c_trail = buf[0];
 			charc = 0;
-			while (c_lead) {
+			while (c_lead) { // read until end of line
 				
-				table_insert(table, divsize, ndivs, enc, x, ncollisions, nunresolved);
+				if (table_insert(table, divsize, ndivs, enc, x, ncollisions, nunresolved)) {
+					error = 3;
+					break;
+				}
 
 				if (buf[k+charc+1]) {
 					if (encode_update(enc, c_lead, k)) { 

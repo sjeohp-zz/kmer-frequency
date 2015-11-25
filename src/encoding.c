@@ -1,4 +1,5 @@
 #include <string.h>
+#include <assert.h>
 #include "encoding.h"
 
 unsigned char encode_base(char b) {
@@ -76,6 +77,7 @@ char decode_base(unsigned char b) {
 }
 
 int encode_seq(unsigned char* enc, const char* seq, int n, int* err_c, int* err_i) {
+	assert(n > 0 && n <= 32);
 	memset(enc, 0x00, 16);
 	unsigned char base;
 	for (int i = 0; i < n; ++i) {
@@ -92,7 +94,8 @@ int encode_seq(unsigned char* enc, const char* seq, int n, int* err_c, int* err_
 	return 0;
 }
 
-int decode_seq(char* seq, unsigned char* enc, int n) {
+void decode_seq(char* seq, unsigned char* enc, int n) {
+	assert(n > 0 && n <= 32);
 	for (int i = 0; i < n/2; ++i) {
 		*seq++ = decode_base((enc[i] >> 4) & 0x0F); // get base, add to sequence, inc pointer
 		*seq++ = decode_base((enc[i] >> 0) & 0x0F);
@@ -100,10 +103,10 @@ int decode_seq(char* seq, unsigned char* enc, int n) {
 	for (int i = 0; i < n%4; ++i) {
 		*seq++ = decode_base((enc[n/2] >> 4) & 0x0F); // same as above for final byte, may not use all 8 bits
 	}
-	return 0;
 }
 
 int encode_update(unsigned char* enc, char b, int n) {
+	assert(n > 0 && n <= 32);
 	unsigned char b0;
 	if ((b0 = encode_base(b)) == 0x00) { return 1; }
 	unsigned char b1;
